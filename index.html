@@ -112,7 +112,6 @@
 </div>
 
 <script>
-  // Credenciais integradas
   const firebaseConfig = {
     apiKey: "AIzaSyDpYCcaxWvSfcGbbjySvozEJurWeQUOX5o",
     authDomain: "agendamento-fretes-c0b9a.firebaseapp.com",
@@ -123,19 +122,13 @@
     appId: "1:377540108149:web:94ab2ed540c84d62583d3c"
   };
 
-  // Inicializar Firebase
   firebase.initializeApp(firebaseConfig);
   const database = firebase.database();
 
-  let diaAtual = 1;
-  let dadosCache = { manha: {}, tarde: {} };
-  let escutaAtivaRef = null;
-
-  const feriadosFixos = [
-    "1-0", "21-3", "1-4", "7-8", "12-9", "2-10", "15-10", "20-10", "25-11"
-  ];
-
+  // Define automaticamente o dia, mês e ano de HOJE ao abrir a página
   const dataHoje = new Date();
+  let diaAtual = dataHoje.getDate(); 
+
   document.getElementById('selectMes').value = dataHoje.getMonth();
 
   const selectAno = document.getElementById('selectAno');
@@ -147,6 +140,13 @@
     if (a === anoAtualSystem) opt.selected = true;
     selectAno.appendChild(opt);
   }
+
+  let dadosCache = { manha: {}, tarde: {} };
+  let escutaAtivaRef = null;
+
+  const feriadosFixos = [
+    "1-0", "21-3", "1-4", "7-8", "12-9", "2-10", "15-10", "20-10", "25-11"
+  ];
 
   function obterCaminhoFirebase() {
     const mes = document.getElementById('selectMes').value;
@@ -170,6 +170,7 @@
     if (diaAtual > totalDias) diaAtual = totalDias;
 
     const diasSemanaAbrev = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    let elementoAbaAtiva = null;
 
     for (let i = 1; i <= totalDias; i++) {
       const dataObj = new Date(ano, mes, i);
@@ -194,7 +195,18 @@
         conectarEOuvirMudancas();
       };
 
+      if (i === diaAtual) {
+        elementoAbaAtiva = btn;
+      }
+
       diasContainer.appendChild(btn);
+    }
+
+    // Rolagem automática da barra de dias para focalizar o dia atual
+    if (elementoAbaAtiva) {
+      setTimeout(() => {
+        elementoAbaAtiva.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }, 100);
     }
   }
 
