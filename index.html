@@ -1,4 +1,294 @@
-function salvarCampo(turno, index) {
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agendamento de Fretes</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 15px; background-color: #f4f6f9; color: #333; }
+    .container { max-width: 100%; margin: 0 auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: #e9ecef; padding: 10px; border-radius: 6px; flex-wrap: wrap; }
+    .select-filtro { padding: 6px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 15px; font-weight: bold; }
+    .tabs-dias { display: flex; overflow-x: auto; gap: 4px; padding-bottom: 8px; border-bottom: 2px solid #2b6cb0; margin-bottom: 15px; }
+    .tab-dia { padding: 6px 10px; background: #edf2f7; border: 1px solid #cbd5e0; cursor: pointer; border-radius: 4px; font-weight: 500; white-space: nowrap; font-size: 12px; text-align: center; }
+    .tab-dia.active { background: #2b6cb0; color: white !important; border-color: #2b6cb0; font-weight: bold; }
+    .tab-dia.fim-semana-feriado { color: #e53e3e; font-weight: bold; background: #fff5f5; border-color: #feb2b2; }
+    
+    .turno-section { margin-bottom: 25px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; }
+    .turno-title { background: #2b6cb0; color: white; margin: -10px -10px 10px -10px; padding: 10px; border-radius: 5px 5px 0 0; font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .tabela-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 1200px; font-size: 13px; }
+    th { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 8px 5px; text-align: center; font-size: 12px; font-weight: bold; }
+    td { border: 1px solid #cbd5e1; padding: 4px; text-align: center; vertical-align: middle; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+    
+    .num-linha { font-weight: bold; color: #64748b; width: 30px; }
+    input[type="text"] { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; }
+    input[type="text"]:focus { border-color: #3182ce; outline: none; background: #fffbe6; }
+    
+    .data-hora-cell { font-size: 11px; color: #4a5568; line-height: 1.2; font-weight: 500; background: #edf2f7; padding: 4px; border-radius: 3px; }
+    
+    .btn-ok { width: 100%; padding: 6px 0; border: 1px solid #cbd5e1; background: #e2e8f0; cursor: pointer; border-radius: 4px; font-weight: bold; color: #475569; font-size: 12px; }
+    .btn-ok.checked { background: #28a745; color: white; border-color: #28a745; }
+    .ok-header { background: #16a34a; color: white; }
+    
+    .status-sync { font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: #e2e8f0; margin-left: auto; }
+  </style>
+
+  <!-- SDKs do Firebase Compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <label for="selectMes"><strong>Mês:</strong></label>
+    <select id="selectMes" class="select-filtro" onchange="atualizarInterface()">
+      <option value="0">Janeiro</option><option value="1">Fevereiro</option>
+      <option value="2">Março</option><option value="3">Abril</option>
+      <option value="4">Maio</option><option value="5">Junho</option>
+      <option value="6">Julho</option><option value="7">Agosto</option>
+      <option value="8">Setembro</option><option value="9">Outubro</option>
+      <option value="10">Novembro</option><option value="11">Dezembro</option>
+    </select>
+
+    <label for="selectAno"><strong>Ano:</strong></label>
+    <select id="selectAno" class="select-filtro" onchange="atualizarInterface()">
+    </select>
+
+    <div id="statusSync" class="status-sync">🔄 Conectando...</div>
+  </div>
+
+  <div class="tabs-dias" id="diasContainer"></div>
+
+  <!-- TURNO MANHÃ -->
+  <div class="turno-section">
+    <div class="turno-title">Turno Manhã</div>
+    <div class="tabela-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 35px;">#</th>
+            <th style="width: 110px;">Nº Atendimento</th>
+            <th style="width: 160px;">Nome do Cliente</th>
+            <th style="width: 140px;">Nome do Vendedor</th>
+            <th style="width: 140px;">Anotado por</th>
+            <th style="width: 130px;">Dia e Hora da Anotação</th>
+            <th>Observações</th>
+            <th style="width: 140px;">Motorista</th>
+            <th style="width: 110px;" class="ok-header">OK da Logística</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-manha"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TURNO TARDE -->
+  <div class="turno-section">
+    <div class="turno-title">Turno Tarde</div>
+    <div class="tabela-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 35px;">#</th>
+            <th style="width: 110px;">Nº Atendimento</th>
+            <th style="width: 160px;">Nome do Cliente</th>
+            <th style="width: 140px;">Nome do Vendedor</th>
+            <th style="width: 140px;">Anotado por</th>
+            <th style="width: 130px;">Dia e Hora da Anotação</th>
+            <th>Observações</th>
+            <th style="width: 140px;">Motorista</th>
+            <th style="width: 110px;" class="ok-header">OK da Logística</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-tarde"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDpYCcaxWvSfcGbbjySvozEJurWeQUOX5o",
+    authDomain: "agendamento-fretes-c0b9a.firebaseapp.com",
+    databaseURL: "https://agendamento-fretes-c0b9a-default-rtdb.firebaseio.com",
+    projectId: "agendamento-fretes-c0b9a",
+    storageBucket: "agendamento-fretes-c0b9a.firebasestorage.app",
+    messagingSenderId: "377540108149",
+    appId: "1:377540108149:web:94ab2ed540c84d62583d3c"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  const dataHoje = new Date();
+  let diaAtual = dataHoje.getDate(); 
+
+  document.getElementById('selectMes').value = dataHoje.getMonth();
+
+  const selectAno = document.getElementById('selectAno');
+  const anoAtualSystem = dataHoje.getFullYear();
+  selectAno.innerHTML = '';
+  for (let a = anoAtualSystem - 1; a <= anoAtualSystem + 5; a++) {
+    const opt = document.createElement('option');
+    opt.value = a;
+    opt.innerText = a;
+    if (a === anoAtualSystem) opt.selected = true;
+    selectAno.appendChild(opt);
+  }
+
+  let dadosCache = { manha: {}, tarde: {} };
+  let escutaAtivaRef = null;
+
+  const feriadosFixos = [
+    "1-0", "21-3", "1-4", "7-8", "12-9", "2-10", "15-10", "20-10", "25-11"
+  ];
+
+  function obterCaminhoFirebase() {
+    const mes = document.getElementById('selectMes').value;
+    const ano = document.getElementById('selectAno').value;
+    return `agendamentos/${ano}/${mes}/${diaAtual}`;
+  }
+
+  function atualizarInterface() {
+    gerarAbasDias();
+    conectarEOuvirMudancas();
+  }
+
+  function gerarAbasDias() {
+    const diasContainer = document.getElementById('diasContainer');
+    diasContainer.innerHTML = '';
+
+    const mes = parseInt(document.getElementById('selectMes').value);
+    const ano = parseInt(document.getElementById('selectAno').value);
+
+    const totalDias = new Date(ano, mes + 1, 0).getDate();
+    if (diaAtual > totalDias) diaAtual = totalDias;
+
+    const diasSemanaAbrev = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    let elementoAbaAtiva = null;
+
+    for (let i = 1; i <= totalDias; i++) {
+      const dataObj = new Date(ano, mes, i);
+      const diaSemanaIndex = dataObj.getDay();
+      const diaSemanaTexto = diasSemanaAbrev[diaSemanaIndex];
+
+      const ehFimDeSemana = (diaSemanaIndex === 0 || diaSemanaIndex === 6);
+      const ehFeriado = feriadosFixos.includes(`${i}-${mes}`);
+
+      const btn = document.createElement('button');
+      btn.className = 'tab-dia' + (i === diaAtual ? ' active' : '');
+      if (ehFimDeSemana || ehFeriado) {
+        btn.classList.add('fim-semana-feriado');
+      }
+
+      btn.innerText = `Dia ${i < 10 ? '0' + i : i} (${diaSemanaTexto})`;
+      
+      btn.onclick = function() {
+        document.querySelectorAll('.tab-dia').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        diaAtual = i;
+        conectarEOuvirMudancas();
+      };
+
+      if (i === diaAtual) {
+        elementoAbaAtiva = btn;
+      }
+
+      diasContainer.appendChild(btn);
+    }
+
+    if (elementoAbaAtiva) {
+      setTimeout(() => {
+        elementoAbaAtiva.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }, 100);
+    }
+  }
+
+  function conectarEOuvirMudancas() {
+    const statusSync = document.getElementById('statusSync');
+    statusSync.innerText = "🔄 Sincronizando...";
+    statusSync.style.color = "#d97706";
+
+    if (escutaAtivaRef) {
+      escutaAtivaRef.off();
+    }
+
+    const caminho = obterCaminhoFirebase();
+    escutaAtivaRef = database.ref(caminho);
+
+    escutaAtivaRef.on('value', (snapshot) => {
+      dadosCache = snapshot.val() || { manha: {}, tarde: {} };
+      renderizarTabelas();
+      statusSync.innerText = "🟢 Sincronizado";
+      statusSync.style.color = "#16a34a";
+    });
+  }
+
+  function construirLinha(turno, index, dados = {}) {
+    const tr = document.createElement('tr');
+    const dataHoraStr = dados.dataHora || '-';
+
+    tr.innerHTML = `
+      <td class="num-linha">${index + 1}</td>
+      <td>
+        <input type="text" id="${turno}-atendimento-${index}" value="${dados.atendimento || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Nº Atendimento">
+      </td>
+      <td>
+        <input type="text" id="${turno}-cliente-${index}" value="${dados.cliente || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Cliente">
+      </td>
+      <td>
+        <input type="text" id="${turno}-vendedor-${index}" value="${dados.vendedor || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Vendedor">
+      </td>
+      <td>
+        <input type="text" id="${turno}-anotadoPor-${index}" value="${dados.anotadoPor || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Anotado por">
+      </td>
+      <td>
+        <div class="data-hora-cell" id="${turno}-dataHora-${index}">${dataHoraStr}</div>
+      </td>
+      <td>
+        <input type="text" id="${turno}-obs-${index}" value="${dados.obs || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Observações">
+      </td>
+      <td>
+        <input type="text" id="${turno}-motorista-${index}" value="${dados.motorista || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Motorista">
+      </td>
+      <td>
+        <button type="button" class="btn-ok ${dados.ok ? 'checked' : ''}" 
+                onclick="toggleOk('${turno}', ${index})">
+          ${dados.ok ? 'OK ✓' : 'Pendente'}
+        </button>
+      </td>
+    `;
+    return tr;
+  }
+
+  function renderizarTabelas() {
+    const tbodyManha = document.getElementById('tbody-manha');
+    const tbodyTarde = document.getElementById('tbody-tarde');
+
+    tbodyManha.innerHTML = '';
+    tbodyTarde.innerHTML = '';
+
+    for (let i = 0; i < 15; i++) {
+      const dadosLinhaManha = dadosCache.manha ? (dadosCache.manha[i] || {}) : {};
+      tbodyManha.appendChild(construirLinha('manha', i, dadosLinhaManha));
+
+      const dadosLinhaTarde = dadosCache.tarde ? (dadosCache.tarde[i] || {}) : {};
+      tbodyTarde.appendChild(construirLinha('tarde', i, dadosLinhaTarde));
+    }
+  }
+
+  function salvarCampo(turno, index) {
     const caminho = `${obterCaminhoFirebase()}/${turno}/${index}`;
 
     const atendimento = document.getElementById(`${turno}-atendimento-${index}`).value.trim();
@@ -8,7 +298,6 @@ function salvarCampo(turno, index) {
     const obs = document.getElementById(`${turno}-obs-${index}`).value.trim();
     const motorista = document.getElementById(`${turno}-motorista-${index}`).value.trim();
 
-    // Se todos os campos de texto estiverem vazios, remove a linha do banco de dados
     if (!atendimento && !cliente && !vendedor && !anotadoPor && !obs && !motorista) {
       database.ref(caminho).remove();
       return;
@@ -35,3 +324,17 @@ function salvarCampo(turno, index) {
 
     database.ref(caminho).set(payload);
   }
+
+  function toggleOk(turno, index) {
+    const caminho = `${obterCaminhoFirebase()}/${turno}/${index}`;
+    let dadosAtuais = dadosCache[turno] && dadosCache[turno][index] ? dadosCache[turno][index] : {};
+
+    const novoStatusOk = !dadosAtuais.ok;
+    database.ref(`${caminho}/ok`).set(novoStatusOk);
+  }
+
+  atualizarInterface();
+</script>
+
+</body>
+</html>
