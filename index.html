@@ -33,7 +33,13 @@
     .btn-ok { width: 100%; padding: 6px 0; border: 1px solid #cbd5e1; background: #e2e8f0; cursor: pointer; border-radius: 4px; font-weight: bold; color: #475569; font-size: 12px; }
     .btn-ok.checked { background: #28a745; color: white; border-color: #28a745; }
     .ok-header { background: #16a34a; color: white; }
+    
+    .status-sync { font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: #e2e8f0; margin-left: auto; }
   </style>
+
+  <!-- SDKs do Firebase Compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -52,6 +58,8 @@
     <label for="selectAno"><strong>Ano:</strong></label>
     <select id="selectAno" class="select-filtro" onchange="atualizarInterface()">
     </select>
+
+    <div id="statusSync" class="status-sync">🔄 Conectando...</div>
   </div>
 
   <div class="tabs-dias" id="diasContainer"></div>
@@ -104,22 +112,29 @@
 </div>
 
 <script>
-  let diaAtual = 1;
+  // Credenciais integradas
+  const firebaseConfig = {
+    apiKey: "AIzaSyDpYCcaxWvSfcGbbjySvozEJurWeQUOX5o",
+    authDomain: "agendamento-fretes-c0b9a.firebaseapp.com",
+    databaseURL: "https://agendamento-fretes-c0b9a-default-rtdb.firebaseio.com",
+    projectId: "agendamento-fretes-c0b9a",
+    storageBucket: "agendamento-fretes-c0b9a.firebasestorage.app",
+    messagingSenderId: "377540108149",
+    appId: "1:377540108149:web:94ab2ed540c84d62583d3c"
+  };
 
-  // Feriados Nacionais Fixos (Dia-Mês index 0)
+  // Inicializar Firebase
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  let diaAtual = 1;
+  let dadosCache = { manha: {}, tarde: {} };
+  let escutaAtivaRef = null;
+
   const feriadosFixos = [
-    "1-0",   // Confraternização Universal (1 Jan)
-    "21-3",  // Tiradentes (21 Abr)
-    "1-4",   // Dia do Trabalho (1 Mai)
-    "7-8",   // Independência do Brasil (7 Set)
-    "12-9",  // Nossa Sra Aparecida (12 Out)
-    "2-10",  // Finados (2 Nov)
-    "15-10", // Proclamação da República (15 Nov)
-    "20-10", // Consciência Negra (20 Nov)
-    "25-11"  // Natal (25 Dez)
+    "1-0", "21-3", "1-4", "7-8", "12-9", "2-10", "15-10", "20-10", "25-11"
   ];
 
-  // Inicializa seletores de Mês e Ano
   const dataHoje = new Date();
   document.getElementById('selectMes').value = dataHoje.getMonth();
 
@@ -133,15 +148,15 @@
     selectAno.appendChild(opt);
   }
 
-  function obterChaveStorage() {
+  function obterCaminhoFirebase() {
     const mes = document.getElementById('selectMes').value;
     const ano = document.getElementById('selectAno').value;
-    return `fretes_v3_${ano}_${mes}_dia_${diaAtual}`;
+    return `agendamentos/${ano}/${mes}/${diaAtual}`;
   }
 
   function atualizarInterface() {
     gerarAbasDias();
-    carregarTabelas();
+    conectarEOuvirMudancas();
   }
 
   function gerarAbasDias() {
@@ -151,7 +166,6 @@
     const mes = parseInt(document.getElementById('selectMes').value);
     const ano = parseInt(document.getElementById('selectAno').value);
 
-    // Quantidade total de dias no mês/ano selecionado
     const totalDias = new Date(ano, mes + 1, 0).getDate();
     if (diaAtual > totalDias) diaAtual = totalDias;
 
@@ -159,7 +173,7 @@
 
     for (let i = 1; i <= totalDias; i++) {
       const dataObj = new Date(ano, mes, i);
-      const diaSemanaIndex = dataObj.getDay(); // 0 = Dom, 6 = Sáb
+      const diaSemanaIndex = dataObj.getDay();
       const diaSemanaTexto = diasSemanaAbrev[diaSemanaIndex];
 
       const ehFimDeSemana = (diaSemanaIndex === 0 || diaSemanaIndex === 6);
@@ -177,11 +191,31 @@
         document.querySelectorAll('.tab-dia').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         diaAtual = i;
-        carregarTabelas();
+        conectarEOuvirMudancas();
       };
 
       diasContainer.appendChild(btn);
     }
+  }
+
+  function conectarEOuvirMudancas() {
+    const statusSync = document.getElementById('statusSync');
+    statusSync.innerText = "🔄 Sincronizando...";
+    statusSync.style.color = "#d97706";
+
+    if (escutaAtivaRef) {
+      escutaAtivaRef.off();
+    }
+
+    const caminho = obterCaminhoFirebase();
+    escutaAtivaRef = database.ref(caminho);
+
+    escutaAtivaRef.on('value', (snapshot) => {
+      dadosCache = snapshot.val() || { manha: {}, tarde: {} };
+      renderizarTabelas();
+      statusSync.innerText = "🟢 Sincronizado";
+      statusSync.style.color = "#16a34a";
+    });
   }
 
   function construirLinha(turno, index, dados = {}) {
@@ -227,10 +261,7 @@
     return tr;
   }
 
-  function carregarTabelas() {
-    const chave = obterChaveStorage();
-    const dadosSalvos = JSON.parse(localStorage.getItem(chave)) || { manha: {}, tarde: {} };
-
+  function renderizarTabelas() {
     const tbodyManha = document.getElementById('tbody-manha');
     const tbodyTarde = document.getElementById('tbody-tarde');
 
@@ -238,20 +269,16 @@
     tbodyTarde.innerHTML = '';
 
     for (let i = 0; i < 15; i++) {
-      const dadosLinhaManha = dadosSalvos.manha ? (dadosSalvos.manha[i] || {}) : {};
+      const dadosLinhaManha = dadosCache.manha ? (dadosCache.manha[i] || {}) : {};
       tbodyManha.appendChild(construirLinha('manha', i, dadosLinhaManha));
 
-      const dadosLinhaTarde = dadosSalvos.tarde ? (dadosSalvos.tarde[i] || {}) : {};
+      const dadosLinhaTarde = dadosCache.tarde ? (dadosCache.tarde[i] || {}) : {};
       tbodyTarde.appendChild(construirLinha('tarde', i, dadosLinhaTarde));
     }
   }
 
   function salvarCampo(turno, index) {
-    const chave = obterChaveStorage();
-    let dadosSalvos = JSON.parse(localStorage.getItem(chave)) || { manha: {}, tarde: {} };
-
-    if (!dadosSalvos[turno]) dadosSalvos[turno] = {};
-    if (!dadosSalvos[turno][index]) dadosSalvos[turno][index] = {};
+    const caminho = `${obterCaminhoFirebase()}/${turno}/${index}`;
 
     const atendimento = document.getElementById(`${turno}-atendimento-${index}`).value;
     const cliente = document.getElementById(`${turno}-cliente-${index}`).value;
@@ -260,42 +287,36 @@
     const obs = document.getElementById(`${turno}-obs-${index}`).value;
     const motorista = document.getElementById(`${turno}-motorista-${index}`).value;
 
-    let dataHora = dadosSalvos[turno][index].dataHora;
-    if ((atendimento || cliente || vendedor || anotadoPor || obs || motorista) && !dataHora) {
+    let dadosAtuais = dadosCache[turno] && dadosCache[turno][index] ? dadosCache[turno][index] : {};
+    let dataHora = dadosAtuais.dataHora;
+
+    if ((atendimento || cliente || vendedor || anotadoPor || obs || motorista) && (!dataHora || dataHora === '-')) {
       const agora = new Date();
       dataHora = `${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
-      document.getElementById(`${turno}-dataHora-${index}`).innerText = dataHora;
-    } else if (!atendimento && !cliente && !vendedor && !anotadoPor && !obs && !motorista && !dadosSalvos[turno][index].ok) {
+    } else if (!atendimento && !cliente && !vendedor && !anotadoPor && !obs && !motorista && !dadosAtuais.ok) {
       dataHora = '-';
-      document.getElementById(`${turno}-dataHora-${index}`).innerText = '-';
     }
 
-    dadosSalvos[turno][index] = {
+    const payload = {
       atendimento,
       cliente,
       vendedor,
       anotadoPor,
       obs,
       motorista,
-      dataHora,
-      ok: dadosSalvos[turno][index].ok || false
+      dataHora: dataHora || '-',
+      ok: dadosAtuais.ok || false
     };
 
-    localStorage.setItem(chave, JSON.stringify(dadosSalvos));
+    database.ref(caminho).set(payload);
   }
 
   function toggleOk(turno, index) {
-    const chave = obterChaveStorage();
-    let dadosSalvos = JSON.parse(localStorage.getItem(chave)) || { manha: {}, tarde: {} };
+    const caminho = `${obterCaminhoFirebase()}/${turno}/${index}`;
+    let dadosAtuais = dadosCache[turno] && dadosCache[turno][index] ? dadosCache[turno][index] : {};
 
-    if (!dadosSalvos[turno]) dadosSalvos[turno] = {};
-    if (!dadosSalvos[turno][index]) dadosSalvos[turno][index] = {};
-
-    const novoStatusOk = !dadosSalvos[turno][index].ok;
-    dadosSalvos[turno][index].ok = novoStatusOk;
-
-    localStorage.setItem(chave, JSON.stringify(dadosSalvos));
-    carregarTabelas();
+    const novoStatusOk = !dadosAtuais.ok;
+    database.ref(`${caminho}/ok`).set(novoStatusOk);
   }
 
   atualizarInterface();
