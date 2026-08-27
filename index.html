@@ -5,35 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agendamento de Fretes</title>
   <style>
-    body { font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #eef2f5; color: #333; }
-    .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    .header { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; font-size: 16px; }
-    .select-mes { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 15px; }
-    .tabs-dias { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 10px; border-bottom: 2px solid #ddd; }
-    .tab-dia { padding: 8px 16px; background: #e2e8f0; border: none; cursor: pointer; border-radius: 4px; font-weight: 500; white-space: nowrap; }
-    .tab-dia.active { background: #0066cc; color: white; font-weight: bold; }
-    .turno-container { margin-top: 20px; display: flex; gap: 20px; flex-wrap: wrap; }
-    .turno-box { flex: 1; min-width: 320px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
-    .turno-title { border-bottom: 2px solid #0066cc; padding-bottom: 5px; color: #0066cc; margin-top: 0; }
-    .form-frete { display: grid; gap: 8px; margin-bottom: 15px; }
-    .form-frete input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-    .btn-add { background: #0066cc; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .btn-add:hover { background: #004999; }
-    .frete-card { border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 10px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .frete-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; align-items: center; font-size: 13px; }
-    .status-box { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f1f5f9; padding: 6px; border-radius: 4px; border: 1px dashed #cbd5e1; }
-    .status-title { font-size: 11px; font-weight: bold; color: #475569; margin-bottom: 4px; text-transform: uppercase; }
-    .btn-ok { padding: 6px 12px; border: 1px solid #cbd5e1; background: #e2e8f0; cursor: pointer; border-radius: 4px; font-weight: bold; color: #475569; width: 100%; }
-    .btn-ok.checked { background: #16a34a; color: white; border-color: #16a34a; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 15px; background-color: #f4f6f9; color: #333; }
+    .container { max-width: 100%; margin: 0 auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: #e9ecef; padding: 10px; border-radius: 6px; }
+    .select-mes { padding: 6px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 15px; font-weight: bold; }
+    .tabs-dias { display: flex; overflow-x: auto; gap: 4px; padding-bottom: 8px; border-bottom: 2px solid #2b6cb0; margin-bottom: 15px; }
+    .tab-dia { padding: 6px 12px; background: #edf2f7; border: 1px solid #cbd5e0; cursor: pointer; border-radius: 4px; font-weight: 500; white-space: nowrap; font-size: 13px; }
+    .tab-dia.active { background: #2b6cb0; color: white; border-color: #2b6cb0; font-weight: bold; }
+    
+    .turno-section { margin-bottom: 25px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; }
+    .turno-title { background: #2b6cb0; color: white; margin: -10px -10px 10px -10px; padding: 10px; border-radius: 5px 5px 0 0; font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .tabela-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 1050px; font-size: 13px; }
+    th { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 8px 5px; text-align: center; font-size: 12px; font-weight: bold; }
+    td { border: 1px solid #cbd5e1; padding: 4px; text-align: center; vertical-align: middle; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+    
+    .num-linha { font-weight: bold; color: #64748b; width: 30px; }
+    input[type="text"] { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; }
+    input[type="text"]:focus { border-color: #3182ce; outline: none; background: #fffbe6; }
+    
+    .data-hora-cell { font-size: 11px; color: #4a5568; line-height: 1.2; font-weight: 500; background: #edf2f7; padding: 4px; border-radius: 3px; }
+    
+    .btn-ok { width: 100%; padding: 6px 0; border: 1px solid #cbd5e1; background: #e2e8f0; cursor: pointer; border-radius: 4px; font-weight: bold; color: #475569; font-size: 12px; }
+    .btn-ok.checked { background: #28a745; color: white; border-color: #28a745; }
+    .ok-header { background: #16a34a; color: white; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>Agendamento de Fretes</h2>
-  
   <div class="header">
-    <label for="selectMes"><strong>Mês Selecionado:</strong></label>
+    <label for="selectMes"><strong>Mês:</strong></label>
     <select id="selectMes" class="select-mes" onchange="mudarFiltro()">
       <option value="Janeiro">Janeiro</option><option value="Fevereiro">Fevereiro</option>
       <option value="Março">Março</option><option value="Abril">Abril</option>
@@ -46,31 +51,47 @@
 
   <div class="tabs-dias" id="diasContainer"></div>
 
-  <div class="turno-container">
-    <!-- Manhã -->
-    <div class="turno-box">
-      <h3 class="turno-title">Turno Manhã</h3>
-      <form class="form-frete" onsubmit="salvarFrete(event, 'Manhã')">
-        <input type="text" id="atendimento-Manhã" placeholder="Nº Atendimento" required>
-        <input type="text" id="cliente-Manhã" placeholder="Nome do Cliente" required>
-        <input type="text" id="atendente-Manhã" placeholder="Nome de Quem Anotou" required>
-        <input type="text" id="motorista-Manhã" placeholder="Nome do Motorista" required>
-        <button type="submit" class="btn-add">Anotar Frete (Manhã)</button>
-      </form>
-      <div id="lista-Manhã"></div>
+  <!-- TURNO MANHÃ -->
+  <div class="turno-section">
+    <div class="turno-title">Turno Manhã</div>
+    <div class="tabela-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 35px;">#</th>
+            <th style="width: 120px;">Nº Atendimento</th>
+            <th style="width: 180px;">Nome do Cliente</th>
+            <th style="width: 150px;">Nome do Vendedor</th>
+            <th style="width: 130px;">Dia e Hora da Anotação</th>
+            <th>Observações</th>
+            <th style="width: 150px;">Motorista</th>
+            <th style="width: 110px;" class="ok-header">OK da Logística</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-manha"></tbody>
+      </table>
     </div>
+  </div>
 
-    <!-- Tarde -->
-    <div class="turno-box">
-      <h3 class="turno-title">Turno Tarde</h3>
-      <form class="form-frete" onsubmit="salvarFrete(event, 'Tarde')">
-        <input type="text" id="atendimento-Tarde" placeholder="Nº Atendimento" required>
-        <input type="text" id="cliente-Tarde" placeholder="Nome do Cliente" required>
-        <input type="text" id="atendente-Tarde" placeholder="Nome de Quem Anotou" required>
-        <input type="text" id="motorista-Tarde" placeholder="Nome do Motorista" required>
-        <button type="submit" class="btn-add">Anotar Frete (Tarde)</button>
-      </form>
-      <div id="lista-Tarde"></div>
+  <!-- TURNO TARDE -->
+  <div class="turno-section">
+    <div class="turno-title">Turno Tarde</div>
+    <div class="tabela-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 35px;">#</th>
+            <th style="width: 120px;">Nº Atendimento</th>
+            <th style="width: 180px;">Nome do Cliente</th>
+            <th style="width: 150px;">Nome do Vendedor</th>
+            <th style="width: 130px;">Dia e Hora da Anotação</th>
+            <th>Observações</th>
+            <th style="width: 150px;">Motorista</th>
+            <th style="width: 110px;" class="ok-header">OK da Logística</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-tarde"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -78,7 +99,7 @@
 <script>
   let diaAtual = 1;
 
-  // Gerar Abas de Dias
+  // Gerar Abas de Dias (1 a 31)
   const diasContainer = document.getElementById('diasContainer');
   for (let i = 1; i <= 31; i++) {
     const btn = document.createElement('button');
@@ -88,95 +109,133 @@
       document.querySelectorAll('.tab-dia').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       diaAtual = i;
-      carregarFretes();
+      carregarTabelas();
     };
     diasContainer.appendChild(btn);
   }
 
   function obterChaveStorage() {
     const mes = document.getElementById('selectMes').value;
-    return `fretes_${mes}_dia_${diaAtual}`;
+    return `fretes_v2_${mes}_dia_${diaAtual}`;
   }
 
   function mudarFiltro() {
-    carregarFretes();
+    carregarTabelas();
   }
 
-  function salvarFrete(event, turno) {
-    event.preventDefault();
-    const atendimento = document.getElementById(`atendimento-${turno}`).value;
-    const cliente = document.getElementById(`cliente-${turno}`).value;
-    const atendente = document.getElementById(`atendente-${turno}`).value;
-    const motorista = document.getElementById(`motorista-${turno}`).value;
+  function construirLinha(turno, index, dados = {}) {
+    const tr = document.createElement('tr');
+    const dataHoraStr = dados.dataHora || '-';
 
-    const agora = new Date();
-    const dataAnotacao = agora.toLocaleDateString('pt-BR');
-    const horaAnotacao = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    tr.innerHTML = `
+      <td class="num-linha">${index + 1}</td>
+      <td>
+        <input type="text" id="${turno}-atendimento-${index}" value="${dados.atendimento || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Nº Atendimento">
+      </td>
+      <td>
+        <input type="text" id="${turno}-cliente-${index}" value="${dados.cliente || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Cliente">
+      </td>
+      <td>
+        <input type="text" id="${turno}-vendedor-${index}" value="${dados.vendedor || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Vendedor">
+      </td>
+      <td>
+        <div class="data-hora-cell" id="${turno}-dataHora-${index}">${dataHoraStr}</div>
+      </td>
+      <td>
+        <input type="text" id="${turno}-obs-${index}" value="${dados.obs || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Observações">
+      </td>
+      <td>
+        <input type="text" id="${turno}-motorista-${index}" value="${dados.motorista || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Motorista">
+      </td>
+      <td>
+        <button type="button" class="btn-ok ${dados.ok ? 'checked' : ''}" 
+                onclick="toggleOk('${turno}', ${index})">
+          ${dados.ok ? 'OK ✓' : 'Pendente'}
+        </button>
+      </td>
+    `;
+    return tr;
+  }
 
-    const novoFrete = {
-      id: Date.now(),
-      turno,
+  function carregarTabelas() {
+    const chave = obterChaveStorage();
+    const dadosSalvos = JSON.parse(localStorage.getItem(chave)) || { manha: {}, tarde: {} };
+
+    const tbodyManha = document.getElementById('tbody-manha');
+    const tbodyTarde = document.getElementById('tbody-tarde');
+
+    tbodyManha.innerHTML = '';
+    tbodyTarde.innerHTML = '';
+
+    // Criar 15 linhas para a Manhã
+    for (let i = 0; i < 15; i++) {
+      const dadosLinha = dadosSalvos.manha ? (dadosSalvos.manha[i] || {}) : {};
+      tbodyManha.appendChild(construirLinha('manha', i, dadosLinha));
+    }
+
+    // Criar 15 linhas para a Tarde
+    for (let i = 0; i < 15; i++) {
+      const dadosLinha = dadosSalvos.tarde ? (dadosSalvos.tarde[i] || {}) : {};
+      tbodyTarde.appendChild(construirLinha('tarde', i, dadosLinha));
+    }
+  }
+
+  function salvarCampo(turno, index) {
+    const chave = obterChaveStorage();
+    let dadosSalvos = JSON.parse(localStorage.getItem(chave)) || { manha: {}, tarde: {} };
+
+    if (!dadosSalvos[turno]) dadosSalvos[turno] = {};
+    if (!dadosSalvos[turno][index]) dadosSalvos[turno][index] = {};
+
+    const atendimento = document.getElementById(`${turno}-atendimento-${index}`).value;
+    const cliente = document.getElementById(`${turno}-cliente-${index}`).value;
+    const vendedor = document.getElementById(`${turno}-vendedor-${index}`).value;
+    const obs = document.getElementById(`${turno}-obs-${index}`).value;
+    const motorista = document.getElementById(`${turno}-motorista-${index}`).value;
+
+    let dataHora = dadosSalvos[turno][index].dataHora;
+    if ((atendimento || cliente || vendedor || obs || motorista) && !dataHora) {
+      const agora = new Date();
+      dataHora = `${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+      document.getElementById(`${turno}-dataHora-${index}`).innerText = dataHora;
+    } else if (!atendimento && !cliente && !vendedor && !obs && !motorista && !dadosSalvos[turno][index].ok) {
+      dataHora = '-';
+      document.getElementById(`${turno}-dataHora-${index}`).innerText = '-';
+    }
+
+    dadosSalvos[turno][index] = {
       atendimento,
       cliente,
-      dataAnotacao,
-      atendente,
-      horaAnotacao,
+      vendedor,
+      obs,
       motorista,
-      okLogistica: false
+      dataHora,
+      ok: dadosSalvos[turno][index].ok || false
     };
 
-    const chave = obterChaveStorage();
-    const fretesExistentes = JSON.parse(localStorage.getItem(chave)) || [];
-    fretesExistentes.push(novoFrete);
-    localStorage.setItem(chave, JSON.stringify(fretesExistentes));
-
-    event.target.reset();
-    carregarFretes();
+    localStorage.setItem(chave, JSON.stringify(dadosSalvos));
   }
 
-  function toggleOkLogistica(id) {
+  function toggleOk(turno, index) {
     const chave = obterChaveStorage();
-    let fretes = JSON.parse(localStorage.getItem(chave)) || [];
-    fretes = fretes.map(f => {
-      if (f.id === id) f.okLogistica = !f.okLogistica;
-      return f;
-    });
-    localStorage.setItem(chave, JSON.stringify(fretes));
-    carregarFretes();
+    let dadosSalvos = JSON.parse(localStorage.getItem(chave)) || { manha: {}, tarde: {} };
+
+    if (!dadosSalvos[turno]) dadosSalvos[turno] = {};
+    if (!dadosSalvos[turno][index]) dadosSalvos[turno][index] = {};
+
+    const novoStatusOk = !dadosSalvos[turno][index].ok;
+    dadosSalvos[turno][index].ok = novoStatusOk;
+
+    localStorage.setItem(chave, JSON.stringify(dadosSalvos));
+    carregarTabelas();
   }
 
-  function carregarFretes() {
-    const chave = obterChaveStorage();
-    const fretes = JSON.parse(localStorage.getItem(chave)) || [];
-
-    document.getElementById('lista-Manhã').innerHTML = '';
-    document.getElementById('lista-Tarde').innerHTML = '';
-
-    fretes.forEach(f => {
-      const card = document.createElement('div');
-      card.className = 'frete-card';
-      card.innerHTML = `
-        <div class="frete-grid">
-          <div><strong>Atendimento:</strong><br>${f.atendimento}</div>
-          <div><strong>Cliente:</strong><br>${f.cliente}</div>
-          <div><strong>Data Anotação:</strong><br>${f.dataAnotacao}</div>
-          <div><strong>Anotado por:</strong><br>${f.atendente}</div>
-          <div><strong>Hora:</strong><br>${f.horaAnotacao}</div>
-          <div><strong>Motorista:</strong><br>${f.motorista}</div>
-          <div class="status-box">
-            <span class="status-title">OK da logística</span>
-            <button class="btn-ok ${f.okLogistica ? 'checked' : ''}" onclick="toggleOkLogistica(${f.id})">
-              ${f.okLogistica ? 'OK ✓' : 'Aprovar'}
-            </button>
-          </div>
-        </div>
-      `;
-      document.getElementById(`lista-${f.turno}`).appendChild(card);
-    });
-  }
-
-  // Carrega ao iniciar
-  carregarFretes();
+  carregarTabelas();
 </script>
 
 </body>
