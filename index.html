@@ -8,17 +8,18 @@
     * { box-sizing: border-box; }
     body { font-family: Arial, sans-serif; margin: 15px; background-color: #f4f6f9; color: #333; }
     .container { max-width: 100%; margin: 0 auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: #e9ecef; padding: 10px; border-radius: 6px; }
-    .select-mes { padding: 6px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 15px; font-weight: bold; }
+    .header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: #e9ecef; padding: 10px; border-radius: 6px; flex-wrap: wrap; }
+    .select-filtro { padding: 6px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 15px; font-weight: bold; }
     .tabs-dias { display: flex; overflow-x: auto; gap: 4px; padding-bottom: 8px; border-bottom: 2px solid #2b6cb0; margin-bottom: 15px; }
-    .tab-dia { padding: 6px 12px; background: #edf2f7; border: 1px solid #cbd5e0; cursor: pointer; border-radius: 4px; font-weight: 500; white-space: nowrap; font-size: 13px; }
-    .tab-dia.active { background: #2b6cb0; color: white; border-color: #2b6cb0; font-weight: bold; }
+    .tab-dia { padding: 6px 10px; background: #edf2f7; border: 1px solid #cbd5e0; cursor: pointer; border-radius: 4px; font-weight: 500; white-space: nowrap; font-size: 12px; text-align: center; }
+    .tab-dia.active { background: #2b6cb0; color: white !important; border-color: #2b6cb0; font-weight: bold; }
+    .tab-dia.fim-semana-feriado { color: #e53e3e; font-weight: bold; background: #fff5f5; border-color: #feb2b2; }
     
     .turno-section { margin-bottom: 25px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; }
     .turno-title { background: #2b6cb0; color: white; margin: -10px -10px 10px -10px; padding: 10px; border-radius: 5px 5px 0 0; font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
     
     .tabela-wrapper { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 1050px; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; min-width: 1200px; font-size: 13px; }
     th { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 8px 5px; text-align: center; font-size: 12px; font-weight: bold; }
     td { border: 1px solid #cbd5e1; padding: 4px; text-align: center; vertical-align: middle; }
     tr:nth-child(even) { background-color: #f8fafc; }
@@ -39,13 +40,17 @@
 <div class="container">
   <div class="header">
     <label for="selectMes"><strong>Mês:</strong></label>
-    <select id="selectMes" class="select-mes" onchange="mudarFiltro()">
-      <option value="Janeiro">Janeiro</option><option value="Fevereiro">Fevereiro</option>
-      <option value="Março">Março</option><option value="Abril">Abril</option>
-      <option value="Maio">Maio</option><option value="Junho">Junho</option>
-      <option value="Julho">Julho</option><option value="Agosto">Agosto</option>
-      <option value="Setembro">Setembro</option><option value="Outubro">Outubro</option>
-      <option value="Novembro">Novembro</option><option value="Dezembro">Dezembro</option>
+    <select id="selectMes" class="select-filtro" onchange="atualizarInterface()">
+      <option value="0">Janeiro</option><option value="1">Fevereiro</option>
+      <option value="2">Março</option><option value="3">Abril</option>
+      <option value="4">Maio</option><option value="5">Junho</option>
+      <option value="6">Julho</option><option value="7">Agosto</option>
+      <option value="8">Setembro</option><option value="9">Outubro</option>
+      <option value="10">Novembro</option><option value="11">Dezembro</option>
+    </select>
+
+    <label for="selectAno"><strong>Ano:</strong></label>
+    <select id="selectAno" class="select-filtro" onchange="atualizarInterface()">
     </select>
   </div>
 
@@ -59,12 +64,13 @@
         <thead>
           <tr>
             <th style="width: 35px;">#</th>
-            <th style="width: 120px;">Nº Atendimento</th>
-            <th style="width: 180px;">Nome do Cliente</th>
-            <th style="width: 150px;">Nome do Vendedor</th>
+            <th style="width: 110px;">Nº Atendimento</th>
+            <th style="width: 160px;">Nome do Cliente</th>
+            <th style="width: 140px;">Nome do Vendedor</th>
+            <th style="width: 140px;">Anotado por</th>
             <th style="width: 130px;">Dia e Hora da Anotação</th>
             <th>Observações</th>
-            <th style="width: 150px;">Motorista</th>
+            <th style="width: 140px;">Motorista</th>
             <th style="width: 110px;" class="ok-header">OK da Logística</th>
           </tr>
         </thead>
@@ -81,12 +87,13 @@
         <thead>
           <tr>
             <th style="width: 35px;">#</th>
-            <th style="width: 120px;">Nº Atendimento</th>
-            <th style="width: 180px;">Nome do Cliente</th>
-            <th style="width: 150px;">Nome do Vendedor</th>
+            <th style="width: 110px;">Nº Atendimento</th>
+            <th style="width: 160px;">Nome do Cliente</th>
+            <th style="width: 140px;">Nome do Vendedor</th>
+            <th style="width: 140px;">Anotado por</th>
             <th style="width: 130px;">Dia e Hora da Anotação</th>
             <th>Observações</th>
-            <th style="width: 150px;">Motorista</th>
+            <th style="width: 140px;">Motorista</th>
             <th style="width: 110px;" class="ok-header">OK da Logística</th>
           </tr>
         </thead>
@@ -99,28 +106,82 @@
 <script>
   let diaAtual = 1;
 
-  // Gerar Abas de Dias (1 a 31)
-  const diasContainer = document.getElementById('diasContainer');
-  for (let i = 1; i <= 31; i++) {
-    const btn = document.createElement('button');
-    btn.className = 'tab-dia' + (i === 1 ? ' active' : '');
-    btn.innerText = `Dia ${i < 10 ? '0' + i : i}`;
-    btn.onclick = function() {
-      document.querySelectorAll('.tab-dia').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      diaAtual = i;
-      carregarTabelas();
-    };
-    diasContainer.appendChild(btn);
+  // Feriados Nacionais Fixos (Dia-Mês index 0)
+  const feriadosFixos = [
+    "1-0",   // Confraternização Universal (1 Jan)
+    "21-3",  // Tiradentes (21 Abr)
+    "1-4",   // Dia do Trabalho (1 Mai)
+    "7-8",   // Independência do Brasil (7 Set)
+    "12-9",  // Nossa Sra Aparecida (12 Out)
+    "2-10",  // Finados (2 Nov)
+    "15-10", // Proclamação da República (15 Nov)
+    "20-10", // Consciência Negra (20 Nov)
+    "25-11"  // Natal (25 Dez)
+  ];
+
+  // Inicializa seletores de Mês e Ano
+  const dataHoje = new Date();
+  document.getElementById('selectMes').value = dataHoje.getMonth();
+
+  const selectAno = document.getElementById('selectAno');
+  const anoAtualSystem = dataHoje.getFullYear();
+  for (let a = anoAtualSystem - 1; a <= anoAtualSystem + 5; a++) {
+    const opt = document.createElement('option');
+    opt.value = a;
+    opt.innerText = a;
+    if (a === anoAtualSystem) opt.selected = true;
+    selectAno.appendChild(opt);
   }
 
   function obterChaveStorage() {
     const mes = document.getElementById('selectMes').value;
-    return `fretes_v2_${mes}_dia_${diaAtual}`;
+    const ano = document.getElementById('selectAno').value;
+    return `fretes_v3_${ano}_${mes}_dia_${diaAtual}`;
   }
 
-  function mudarFiltro() {
+  function atualizarInterface() {
+    gerarAbasDias();
     carregarTabelas();
+  }
+
+  function gerarAbasDias() {
+    const diasContainer = document.getElementById('diasContainer');
+    diasContainer.innerHTML = '';
+
+    const mes = parseInt(document.getElementById('selectMes').value);
+    const ano = parseInt(document.getElementById('selectAno').value);
+
+    // Quantidade total de dias no mês/ano selecionado
+    const totalDias = new Date(ano, mes + 1, 0).getDate();
+    if (diaAtual > totalDias) diaAtual = totalDias;
+
+    const diasSemanaAbrev = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+    for (let i = 1; i <= totalDias; i++) {
+      const dataObj = new Date(ano, mes, i);
+      const diaSemanaIndex = dataObj.getDay(); // 0 = Dom, 6 = Sáb
+      const diaSemanaTexto = diasSemanaAbrev[diaSemanaIndex];
+
+      const ehFimDeSemana = (diaSemanaIndex === 0 || diaSemanaIndex === 6);
+      const ehFeriado = feriadosFixos.includes(`${i}-${mes}`);
+
+      const btn = document.createElement('button');
+      btn.className = 'tab-dia' + (i === diaAtual ? ' active' : '');
+      if (ehFimDeSemana || ehFeriado) {
+        btn.classList.add('fim-semana-feriado');
+      }
+
+      btn.innerText = `Dia ${i < 10 ? '0' + i : i} (${diaSemanaTexto})`;
+      
+      btn.onclick = function() {
+        document.querySelectorAll('.tab-dia').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        diaAtual = i;
+        carregarTabelas();
+      };
+
+      diasContainer.appendChild(btn);
+    }
   }
 
   function construirLinha(turno, index, dados = {}) {
@@ -140,6 +201,10 @@
       <td>
         <input type="text" id="${turno}-vendedor-${index}" value="${dados.vendedor || ''}" 
                onchange="salvarCampo('${turno}', ${index})" placeholder="Vendedor">
+      </td>
+      <td>
+        <input type="text" id="${turno}-anotadoPor-${index}" value="${dados.anotadoPor || ''}" 
+               onchange="salvarCampo('${turno}', ${index})" placeholder="Anotado por">
       </td>
       <td>
         <div class="data-hora-cell" id="${turno}-dataHora-${index}">${dataHoraStr}</div>
@@ -172,16 +237,12 @@
     tbodyManha.innerHTML = '';
     tbodyTarde.innerHTML = '';
 
-    // Criar 15 linhas para a Manhã
     for (let i = 0; i < 15; i++) {
-      const dadosLinha = dadosSalvos.manha ? (dadosSalvos.manha[i] || {}) : {};
-      tbodyManha.appendChild(construirLinha('manha', i, dadosLinha));
-    }
+      const dadosLinhaManha = dadosSalvos.manha ? (dadosSalvos.manha[i] || {}) : {};
+      tbodyManha.appendChild(construirLinha('manha', i, dadosLinhaManha));
 
-    // Criar 15 linhas para a Tarde
-    for (let i = 0; i < 15; i++) {
-      const dadosLinha = dadosSalvos.tarde ? (dadosSalvos.tarde[i] || {}) : {};
-      tbodyTarde.appendChild(construirLinha('tarde', i, dadosLinha));
+      const dadosLinhaTarde = dadosSalvos.tarde ? (dadosSalvos.tarde[i] || {}) : {};
+      tbodyTarde.appendChild(construirLinha('tarde', i, dadosLinhaTarde));
     }
   }
 
@@ -195,15 +256,16 @@
     const atendimento = document.getElementById(`${turno}-atendimento-${index}`).value;
     const cliente = document.getElementById(`${turno}-cliente-${index}`).value;
     const vendedor = document.getElementById(`${turno}-vendedor-${index}`).value;
+    const anotadoPor = document.getElementById(`${turno}-anotadoPor-${index}`).value;
     const obs = document.getElementById(`${turno}-obs-${index}`).value;
     const motorista = document.getElementById(`${turno}-motorista-${index}`).value;
 
     let dataHora = dadosSalvos[turno][index].dataHora;
-    if ((atendimento || cliente || vendedor || obs || motorista) && !dataHora) {
+    if ((atendimento || cliente || vendedor || anotadoPor || obs || motorista) && !dataHora) {
       const agora = new Date();
       dataHora = `${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
       document.getElementById(`${turno}-dataHora-${index}`).innerText = dataHora;
-    } else if (!atendimento && !cliente && !vendedor && !obs && !motorista && !dadosSalvos[turno][index].ok) {
+    } else if (!atendimento && !cliente && !vendedor && !anotadoPor && !obs && !motorista && !dadosSalvos[turno][index].ok) {
       dataHora = '-';
       document.getElementById(`${turno}-dataHora-${index}`).innerText = '-';
     }
@@ -212,6 +274,7 @@
       atendimento,
       cliente,
       vendedor,
+      anotadoPor,
       obs,
       motorista,
       dataHora,
@@ -235,7 +298,7 @@
     carregarTabelas();
   }
 
-  carregarTabelas();
+  atualizarInterface();
 </script>
 
 </body>
