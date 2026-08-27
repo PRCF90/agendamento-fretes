@@ -287,64 +287,38 @@
     }
   }
 
-  // Função inteligente que resolve conflitos de concorrência usando Transação do Firebase
-  function salvarCampo(turno, indexDesejado) {
-    const caminhoTurno = `${obterCaminhoFirebase()}/${turno}`;
+  function salvarCampo(turno, index) {
+    const caminho = `${obterCaminhoFirebase()}/${turno}/${index}`;
 
-    const atendimento = document.getElementById(`${turno}-atendimento-${indexDesejado}`).value.trim();
-    const cliente = document.getElementById(`${turno}-cliente-${indexDesejado}`).value.trim();
-    const vendedor = document.getElementById(`${turno}-vendedor-${indexDesejado}`).value.trim();
-    const anotadoPor = document.getElementById(`${turno}-anotadoPor-${indexDesejado}`).value.trim();
-    const obs = document.getElementById(`${turno}-obs-${indexDesejado}`).value.trim();
-    const motorista = document.getElementById(`${turno}-motorista-${indexDesejado}`).value.trim();
+    const atendimento = document.getElementById(`${turno}-atendimento-${index}`).value;
+    const cliente = document.getElementById(`${turno}-cliente-${index}`).value;
+    const vendedor = document.getElementById(`${turno}-vendedor-${index}`).value;
+    const anotadoPor = document.getElementById(`${turno}-anotadoPor-${index}`).value;
+    const obs = document.getElementById(`${turno}-obs-${index}`).value;
+    const motorista = document.getElementById(`${turno}-motorista-${index}`).value;
 
-    const estaVazio = (!atendimento && !cliente && !vendedor && !anotadoPor && !obs && !motorista);
+    let dadosAtuais = dadosCache[turno] && dadosCache[turno][index] ? dadosCache[turno][index] : {};
+    let dataHora = dadosAtuais.dataHora;
 
-    database.ref(caminhoTurno).transaction((turnoAtual) => {
-      if (!turnoAtual) turnoAtual = {};
+    if ((atendimento || cliente || vendedor || anotadoPor || obs || motorista) && (!dataHora || dataHora === '-')) {
+      const agora = new Date();
+      dataHora = `${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (!atendimento && !cliente && !vendedor && !anotadoPor && !obs && !motorista && !dadosAtuais.ok) {
+      dataHora = '-';
+    }
 
-      let indexParaSalvar = indexDesejado;
-      let linhaDesejada = turnoAtual[indexDesejado] || {};
+    const payload = {
+      atendimento,
+      cliente,
+      vendedor,
+      anotadoPor,
+      obs,
+      motorista,
+      dataHora: dataHora || '-',
+      ok: dadosAtuais.ok || false
+    };
 
-      // Se o usuário está limpando o campo
-      if (estaVazio) {
-        if (!linhaDesejada.ok) {
-          delete turnoAtual[indexDesejado];
-        }
-        return turnoAtual;
-      }
-
-      // Se outra pessoa já preencheu a linha enquanto ele digitava, encontra a próxima vaga livre
-      const jaTemConteudoDeOutro = (linhaDesejada.atendimento || linhaDesejada.cliente) && 
-                                   (linhaDesejada.atendimento !== atendimento || linhaDesejada.cliente !== cliente);
-
-      if (jaTemConteudoDeOutro) {
-        let proximaVaga = indexDesejado + 1;
-        while (turnoAtual[proximaVaga] && (turnoAtual[proximaVaga].atendimento || turnoAtual[proximaVaga].cliente)) {
-          proximaVaga++;
-        }
-        indexParaSalvar = proximaVaga;
-      }
-
-      let dataHora = turnoAtual[indexParaSalvar] ? turnoAtual[indexParaSalvar].dataHora : null;
-      if (!dataHora || dataHora === '-') {
-        const agora = new Date();
-        dataHora = `${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
-      }
-
-      turnoAtual[indexParaSalvar] = {
-        atendimento,
-        cliente,
-        vendedor,
-        anotadoPor,
-        obs,
-        motorista,
-        dataHora: dataHora,
-        ok: (turnoAtual[indexParaSalvar] && turnoAtual[indexParaSalvar].ok) || false
-      };
-
-      return turnoAtual;
-    });
+    database.ref(caminho).set(payload);
   }
 
   function toggleOk(turno, index) {
