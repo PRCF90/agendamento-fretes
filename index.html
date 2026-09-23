@@ -48,6 +48,9 @@
     .btn-ok.checked { background: #28a745; color: white; border-color: #28a745; }
     .ok-header { background: #16a34a; color: white; }
     
+    .btn-adicionar { margin-top: 10px; padding: 8px 15px; background: #2b6cb0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; }
+    .btn-adicionar:hover { background: #2c5282; }
+
     .status-sync { font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: #e2e8f0; margin-left: auto; }
   </style>
 
@@ -99,6 +102,7 @@
         <tbody id="tbody-manha"></tbody>
       </table>
     </div>
+    <button type="button" class="btn-adicionar" onclick="adicionarLinha('manha')">➕ Adicionar Linha (Manhã)</button>
   </div>
 
   <!-- TURNO TARDE -->
@@ -122,6 +126,7 @@
         <tbody id="tbody-tarde"></tbody>
       </table>
     </div>
+    <button type="button" class="btn-adicionar" onclick="adicionarLinha('tarde')">➕ Adicionar Linha (Tarde)</button>
   </div>
 </div>
 
@@ -300,10 +305,29 @@
     tbodyManha.innerHTML = '';
     tbodyTarde.innerHTML = '';
 
-    for (let i = 0; i < 15; i++) {
+    // Determina quantas linhas mostrar com base no cache ou padrão mínimo de 15
+    let maxManha = 14;
+    if (dadosCache.manha) {
+      const chaves = Object.keys(dadosCache.manha).map(Number);
+      if (chaves.length > 0) {
+        maxManha = Math.max(14, ...chaves);
+      }
+    }
+
+    let maxTarde = 14;
+    if (dadosCache.tarde) {
+      const chaves = Object.keys(dadosCache.tarde).map(Number);
+      if (chaves.length > 0) {
+        maxTarde = Math.max(14, ...chaves);
+      }
+    }
+
+    for (let i = 0; i <= maxManha; i++) {
       const dadosLinhaManha = dadosCache.manha ? (dadosCache.manha[i] || {}) : {};
       tbodyManha.appendChild(construirLinha('manha', i, dadosLinhaManha));
+    }
 
+    for (let i = 0; i <= maxTarde; i++) {
       const dadosLinhaTarde = dadosCache.tarde ? (dadosCache.tarde[i] || {}) : {};
       tbodyTarde.appendChild(construirLinha('tarde', i, dadosLinhaTarde));
     }
@@ -311,6 +335,25 @@
     // Ajusta a altura de todas as caixas de texto de observação após carregar os dados
     document.querySelectorAll('.obs-textarea').forEach(textarea => {
       autoAjustarAlturaTextarea(textarea);
+    });
+  }
+
+  function adicionarLinha(turno) {
+    let turnoDados = dadosCache[turno] || {};
+    const chaves = Object.keys(turnoDados).map(Number);
+    let proximoIndex = chaves.length > 0 ? Math.max(...chaves) + 1 : 15;
+    
+    // Cria uma entrada vazia no Firebase para expandir a tabela para todos os usuários conectados
+    const caminho = `${obterCaminhoFirebase()}/${turno}/${proximoIndex}`;
+    database.ref(caminho).set({
+      atendimento: "",
+      cliente: "",
+      vendedor: "",
+      anotadoPor: "",
+      obs: "",
+      motorista: "",
+      dataHora: "-",
+      ok: false
     });
   }
 
@@ -324,7 +367,9 @@
     const obs = document.getElementById(`${turno}-obs-${index}`).value.trim();
     const motorista = document.getElementById(`${turno}-motorista-${index}`).value.trim();
 
-    if (!atendimento && !cliente && !vendedor && !anotadoPor && !obs && !motorista) {
+    // Se a linha estiver totalmente vazia e for maior ou igual ao índice 15, podemos limpá-la do banco se preferir, 
+    // mas por segurança mantemos caso o usuário apenas pareça ter apagado temporariamente.
+    if (!atendimento && !cliente && !vendedor && !anotadoPor && !obs && !motorista && index >= 15) {
       database.ref(caminho).remove();
       return;
     }
