@@ -28,8 +28,8 @@
     input[type="text"] { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; }
     input[type="text"]:focus, textarea:focus { border-color: #3182ce; outline: none; background: #fffbe6; }
     
-    /* Estilo autoajustável para o campo de Observação */
-    textarea.obs-textarea {
+    /* Estilo autoajustável para o campo de Cliente e Observação */
+    textarea.auto-textarea {
       width: 100%;
       min-height: 32px;
       padding: 5px;
@@ -264,8 +264,10 @@
                onchange="salvarCampo('${turno}', ${index})" placeholder="Nº Atendimento">
       </td>
       <td>
-        <input type="text" id="${turno}-cliente-${index}" value="${dados.cliente || ''}" 
-               onchange="salvarCampo('${turno}', ${index})" placeholder="Cliente">
+        <textarea id="${turno}-cliente-${index}" class="auto-textarea" 
+                  oninput="autoAjustarAlturaTextarea(this)" 
+                  onchange="salvarCampo('${turno}', ${index})" 
+                  placeholder="Cliente">${dados.cliente || ''}</textarea>
       </td>
       <td>
         <input type="text" id="${turno}-vendedor-${index}" value="${dados.vendedor || ''}" 
@@ -279,7 +281,7 @@
         <div class="data-hora-cell" id="${turno}-dataHora-${index}">${dataHoraStr}</div>
       </td>
       <td>
-        <textarea id="${turno}-obs-${index}" class="obs-textarea" 
+        <textarea id="${turno}-obs-${index}" class="auto-textarea" 
                   oninput="autoAjustarAlturaTextarea(this)" 
                   onchange="salvarCampo('${turno}', ${index})" 
                   placeholder="Observações">${dados.obs || ''}</textarea>
@@ -305,7 +307,6 @@
     tbodyManha.innerHTML = '';
     tbodyTarde.innerHTML = '';
 
-    // Determina quantas linhas mostrar com base no cache ou padrão mínimo de 15
     let maxManha = 14;
     if (dadosCache.manha) {
       const chaves = Object.keys(dadosCache.manha).map(Number);
@@ -332,8 +333,8 @@
       tbodyTarde.appendChild(construirLinha('tarde', i, dadosLinhaTarde));
     }
 
-    // Ajusta a altura de todas as caixas de texto de observação após carregar os dados
-    document.querySelectorAll('.obs-textarea').forEach(textarea => {
+    // Ajusta a altura de todas as caixas de texto (Cliente e Observações) após carregar os dados
+    document.querySelectorAll('.auto-textarea').forEach(textarea => {
       autoAjustarAlturaTextarea(textarea);
     });
   }
@@ -343,7 +344,6 @@
     const chaves = Object.keys(turnoDados).map(Number);
     let proximoIndex = chaves.length > 0 ? Math.max(...chaves) + 1 : 15;
     
-    // Cria uma entrada vazia no Firebase para expandir a tabela para todos os usuários conectados
     const caminho = `${obterCaminhoFirebase()}/${turno}/${proximoIndex}`;
     database.ref(caminho).set({
       atendimento: "",
@@ -367,8 +367,6 @@
     const obs = document.getElementById(`${turno}-obs-${index}`).value.trim();
     const motorista = document.getElementById(`${turno}-motorista-${index}`).value.trim();
 
-    // Se a linha estiver totalmente vazia e for maior ou igual ao índice 15, podemos limpá-la do banco se preferir, 
-    // mas por segurança mantemos caso o usuário apenas pareça ter apagado temporariamente.
     if (!atendimento && !cliente && !vendedor && !anotadoPor && !obs && !motorista && index >= 15) {
       database.ref(caminho).remove();
       return;
