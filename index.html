@@ -307,29 +307,30 @@
     tbodyManha.innerHTML = '';
     tbodyTarde.innerHTML = '';
 
+    // Garante que se dadosCache ou os turnos forem nulos, inicializa objetos vazios
+    if (!dadosCache) dadosCache = { manha: {}, tarde: {} };
+    if (!dadosCache.manha) dadosCache.manha = {};
+    if (!dadosCache.tarde) dadosCache.tarde = {};
+
     let maxManha = 14;
-    if (dadosCache.manha) {
-      const chaves = Object.keys(dadosCache.manha).map(Number);
-      if (chaves.length > 0) {
-        maxManha = Math.max(14, ...chaves);
-      }
+    const chavesManha = Object.keys(dadosCache.manha).map(Number).filter(n => !isNaN(n));
+    if (chavesManha.length > 0) {
+      maxManha = Math.max(14, ...chavesManha);
     }
 
     let maxTarde = 14;
-    if (dadosCache.tarde) {
-      const chaves = Object.keys(dadosCache.tarde).map(Number);
-      if (chaves.length > 0) {
-        maxTarde = Math.max(14, ...chaves);
-      }
+    const chavesTarde = Object.keys(dadosCache.tarde).map(Number).filter(n => !isNaN(n));
+    if (chavesTarde.length > 0) {
+      maxTarde = Math.max(14, ...chavesTarde);
     }
 
     for (let i = 0; i <= maxManha; i++) {
-      const dadosLinhaManha = dadosCache.manha ? (dadosCache.manha[i] || {}) : {};
+      const dadosLinhaManha = dadosCache.manha[i] || {};
       tbodyManha.appendChild(construirLinha('manha', i, dadosLinhaManha));
     }
 
     for (let i = 0; i <= maxTarde; i++) {
-      const dadosLinhaTarde = dadosCache.tarde ? (dadosCache.tarde[i] || {}) : {};
+      const dadosLinhaTarde = dadosCache.tarde[i] || {};
       tbodyTarde.appendChild(construirLinha('tarde', i, dadosLinhaTarde));
     }
 
